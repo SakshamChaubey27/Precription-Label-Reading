@@ -1,0 +1,66 @@
+import pytesseract
+from pytesseract import Output
+from PIL import Image
+import pyttsx3
+import os
+from googletrans import Translator
+
+# Initialize Text-to-Speech engine
+engine = pyttsx3.init()
+translator = Translator()
+
+# Configure Tesseract OCR path
+pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
+
+# Function to perform OCR on an image
+def extract_text(image_path):
+    try:
+        image = Image.open(image_path)
+        text = pytesseract.image_to_string(image, lang='eng', output_type=Output.STRING)
+        return text
+    except Exception as e:
+        return f"Error: {e}"
+
+# Function to perform TTS
+def speak_text(text):
+    try:
+        engine.say(text)
+        engine.runAndWait()
+    except Exception as e:
+        print(f"TTS Error: {e}")
+
+# Function to translate text
+def translate_text(text, dest_language):
+    try:
+        translated = translator.translate(text, dest=dest_language)
+        return translated.text
+    except Exception as e:
+        return f"Translation Error: {e}"
+
+# Main function to process a prescription label
+def process_label(image_path, play_audio=True, translate_to=None):
+    # Extract text from image
+    extracted_text = extract_text(image_path)
+    print("Extracted Text:\n", extracted_text)
+
+    # Translate if requested
+    if translate_to:
+        translated_text = translate_text(extracted_text, translate_to)
+        print("Translated Text:\n", translated_text)
+        if play_audio:
+            speak_text(translated_text)
+    else:
+        if play_audio:
+            speak_text(extracted_text)
+
+    return extracted_text
+
+# Example usage
+if __name__ == "__main__":
+    # Define image path (update this with the actual image path)
+    image_path = "prescription_label.jpg"
+
+    if os.path.exists(image_path):
+        process_label(image_path, play_audio=True, translate_to='es')  # Translate to Spanish
+    else:
+        print("Image file not found.")
